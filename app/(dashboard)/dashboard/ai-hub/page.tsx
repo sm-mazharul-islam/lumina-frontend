@@ -9,15 +9,13 @@ import {
   Copy,
   Check,
   Cpu,
-  MessageSquare,
   Sparkles,
   Terminal,
   Zap,
   User,
   Bot,
-  ArrowRight,
-  RefreshCcw,
   Plus,
+  Send,
 } from "lucide-react";
 
 export default function AIHubPage() {
@@ -29,25 +27,25 @@ export default function AIHubPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // অটো-স্ক্রল যখন নতুন রেজাল্ট আসবে
+  // অটো-স্ক্রল যখন নতুন কন্টেন্ট আসবে
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [result]);
+  }, [result, loading]);
 
-  // টেক্সটএরিয়া অটো-রিসাইজ
+  // ইনপুট বক্স অটো-রিসাইজ
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   }, [prompt]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-    setLastQuery(prompt); // প্রশ্নটি সেভ করে রাখা হচ্ছে
+    setLastQuery(prompt);
     setResult("");
 
     try {
@@ -55,16 +53,13 @@ export default function AIHubPage() {
       const res = await api.post(
         "/api/ai/generate",
         { prompt },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setResult(res.data.result);
-      setPrompt(""); // ইনপুট ক্লিয়ার করা
+      setPrompt("");
     } catch (err: unknown) {
-      const error = err as AxiosError<{ message: string }>;
       setResult(
-        "### ⚠️ Neural Link Failure\nUnable to process the request. Please check your connection.",
+        "### ⚠️ Connection Lost\nNeural link disrupted. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -79,37 +74,32 @@ export default function AIHubPage() {
     }
   };
 
-  const handleNewChat = () => {
-    setPrompt("");
-    setResult("");
-    setLastQuery("");
-  };
-
   return (
-    <div className="min-h-screen bg-[#0a0c10] text-slate-300 flex flex-col font-sans">
-      {/* Header / Top Navigation Bar */}
-      <header className="border-b border-slate-800/50 bg-[#0a0c10]/80 backdrop-blur-md sticky top-0 z-50">
-        <nav className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic flex items-center gap-3">
-              Lumina <span className="text-blue-600">AI</span>
+    // 'fixed inset-0' ব্যবহার করা হয়েছে যাতে এই কম্পোনেন্টটি পুরো স্ক্রিন দখল করে এবং একটুও না নড়ে।
+    <div className="fixed inset-0 bg-[#050609] text-slate-300 flex flex-col overflow-hidden font-sans z-10">
+      {/* 1. Header - Absolute Fixed Height */}
+      <header className="h-16 border-b border-white/5 bg-[#050609]/80 backdrop-blur-xl shrink-0 flex items-center">
+        <nav className="max-w-[1600px] w-full mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-black text-white tracking-tighter uppercase italic">
+              LUMINA <span className="text-blue-600">AI</span>
             </h1>
-            <div className="flex items-center gap-3 text-slate-500 font-bold text-xs tracking-widest uppercase border-l border-slate-800/50 pl-6 h-8">
-              <span className="w-10 h-[1px] bg-blue-600"></span>
-              Neural Workspace v2.5
-            </div>
+            <div className="hidden md:block h-4 w-[1px] bg-white/10 mx-2"></div>
+            <p className="hidden md:block text-[9px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+              Neural Interface
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              SYSTEMS:{" "}
-              <span className="text-slate-300 font-bold italic">
-                OPERATIONAL
-              </span>
+          <div className="flex items-center gap-4">
+            <div className="text-[9px] font-mono text-green-500 bg-green-500/5 px-3 py-1 rounded-full border border-green-500/10 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              SYNC_ON
             </div>
             <button
-              onClick={handleNewChat}
-              className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-white transition-all shadow-md"
+              onClick={() => {
+                setResult("");
+                setLastQuery("");
+              }}
+              className="p-2 hover:bg-white/5 rounded-lg border border-white/5 text-slate-500"
             >
               <Plus size={18} />
             </button>
@@ -117,166 +107,177 @@ export default function AIHubPage() {
         </nav>
       </header>
 
-      {/* Main Feature Content Area */}
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-10 flex flex-col gap-10">
-        {/* Dynamic Intelligence Stream / Output Area */}
-        <section className="flex-1 bg-slate-950/40 border border-slate-800 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col min-h-[500px]">
-          {/* Output Controls Bar */}
-          <div className="px-8 py-5 border-b border-slate-800/50 flex justify-between items-center bg-slate-950 backdrop-blur-md sticky top-[73px] z-20 rounded-t-[3rem]">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-              <span className="text-purple-500 font-black text-[10px] tracking-[0.3em] uppercase">
-                Intelligence Stream
-              </span>
-            </div>
-            {result && (
-              <button
-                onClick={copyToClipboard}
-                className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white text-[10px] font-bold uppercase transition-all active:scale-95 shadow-sm"
-              >
-                {copied ? (
-                  <Check size={14} className="text-green-500" />
-                ) : (
-                  <Copy size={14} />
-                )}{" "}
-                {copied ? "Copied" : "Copy"}
-              </button>
-            )}
-          </div>
-
-          {/* Result Content (Messages) */}
-          <div
-            ref={scrollRef}
-            className="p-8 md:p-10 flex-1 overflow-y-auto custom-scrollbar space-y-10 relative z-10 flex flex-col-reverse justify-end"
-          >
-            <AnimatePresence mode="wait">
-              {loading ? (
-                <div className="space-y-6 pt-4 w-full">
-                  <div className="flex gap-4 animate-pulse items-start">
-                    <div className="w-10 h-10 bg-slate-800 rounded-full shrink-0"></div>
-                    <div className="flex-1 space-y-3 mt-1">
-                      <div className="h-4 bg-slate-800 rounded w-1/4"></div>
-                      <div className="h-10 bg-slate-800/50 rounded-2xl w-full"></div>
+      {/* 2. Main Chat Area - Only this part scrolls */}
+      <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-4xl mx-auto">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto no-scrollbar py-10 px-4 space-y-12 pb-44"
+        >
+          <AnimatePresence mode="wait">
+            {!result && !loading && !lastQuery ? (
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-10 space-y-4">
+                <Cpu size={60} strokeWidth={1} className="animate-pulse" />
+                <p className="text-[10px] font-black tracking-[0.5em] uppercase italic">
+                  Awaiting Synchronisation
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-16">
+                {/* User Instruction Block */}
+                {lastQuery && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex gap-4 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0 mt-1 shadow-lg shadow-blue-900/30 text-white">
+                      <User size={16} />
                     </div>
-                  </div>
-                </div>
-              ) : result ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-10 w-full"
-                >
-                  {/* User Question Message Block */}
-                  <div className="flex gap-4 group items-start">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/20 mt-1">
-                      <User size={20} className="text-white" />
-                    </div>
-                    <div className="space-y-2 flex-1">
-                      <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-                        You Asked
-                      </span>
-                      <div className="text-xl font-bold text-white leading-tight italic bg-blue-600/5 p-5 rounded-2xl border border-blue-600/10">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-60 italic">
+                        Master_Command
+                      </p>
+                      <p className="text-xl font-bold text-white leading-relaxed italic pr-4">
                         {lastQuery}
-                      </div>
+                      </p>
                     </div>
-                  </div>
+                  </motion.div>
+                )}
 
-                  {/* AI Response Message Block */}
-                  <div className="flex gap-4 items-start">
-                    <div className="w-10 h-10 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center shrink-0 mt-1">
-                      <Bot size={20} className="text-purple-500" />
+                {/* AI Result Block */}
+                {(loading || result) && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex gap-4 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center shrink-0 mt-1 text-purple-500">
+                      <Bot size={16} />
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <span className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">
-                        Lumina Result
-                      </span>
-                      <div className="prose prose-invert prose-blue max-w-none bg-slate-900/30 p-8 rounded-[2rem] border border-slate-800 shadow-inner">
-                        <ReactMarkdown>{result}</ReactMarkdown>
+                    <div className="flex-1 space-y-4">
+                      <div className="flex justify-between items-center pr-2">
+                        <p className="text-[9px] font-black text-purple-500 uppercase tracking-widest italic">
+                          Lumina_Intel_Stream
+                        </p>
+                        {result && (
+                          <button
+                            onClick={copyToClipboard}
+                            className="text-slate-600 hover:text-white transition-all bg-white/5 p-1.5 rounded-md border border-white/5"
+                          >
+                            {copied ? (
+                              <Check size={14} className="text-green-500" />
+                            ) : (
+                              <Copy size={14} />
+                            )}
+                          </button>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-40 py-24 w-full">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/20 blur-[60px] rounded-full animate-pulse"></div>
-                    <Cpu size={80} className="text-slate-700 relative z-10" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-black tracking-[0.5em] text-[10px] uppercase text-slate-600">
-                      Neural Link Inactive
-                    </p>
-                    <p className="text-slate-800 text-sm font-medium">
-                      Transmit a command via the Neural Interface below.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
-        </section>
 
-        {/* Pro Tip Callout Card */}
-        <section className="bg-blue-600/5 border border-blue-600/10 p-6 rounded-[2.5rem] flex items-center gap-5 shadow-inner">
-          <div className="p-3.5 bg-blue-600 rounded-2xl text-white shrink-0">
-            <Sparkles size={24} />
+                      {loading ? (
+                        <div className="flex items-center gap-3 text-slate-700 font-mono text-[9px] italic tracking-widest">
+                          <LoadingSpinner size={14} className="text-blue-500" />
+                          COMPILING_NEURAL_MAP...
+                        </div>
+                      ) : (
+                        <div className="prose prose-invert prose-blue max-w-none text-slate-300 text-lg leading-8 selection:bg-blue-600/20">
+                          <ReactMarkdown>{result}</ReactMarkdown>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 3. Footer - Neural Interface Bar (Fixed inside Main) */}
+        <div className="absolute bottom-0 left-0 w-full px-4 pb-10 bg-gradient-to-t from-[#050609] via-[#050609] to-transparent shrink-0">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative bg-[#0d0f14] border border-white/5 rounded-[2rem] p-2 flex items-end gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.6)] focus-within:border-white/10 focus-within:ring-1 ring-blue-600/30 transition-all">
+              <textarea
+                ref={textareaRef}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleGenerate();
+                  }
+                }}
+                placeholder="Transmit command..."
+                rows={1}
+                className="flex-1 bg-transparent border-none outline-none text-white text-base py-3 px-4 resize-none max-h-40 no-scrollbar placeholder:text-slate-800 leading-normal"
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={loading || !prompt.trim()}
+                className="mb-1 mr-1 p-3.5 bg-white hover:bg-blue-600 text-black hover:text-white rounded-2xl transition-all active:scale-90 disabled:opacity-5 shadow-lg"
+              >
+                {loading ? (
+                  <LoadingSpinner size={18} />
+                ) : (
+                  <Send size={18} strokeWidth={3} />
+                )}
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-8 mt-4 opacity-30">
+              <div className="flex items-center gap-2 text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] italic">
+                <Sparkles size={10} /> Sync: v2.5
+              </div>
+              <div className="flex items-center gap-2 text-[8px] text-slate-500 font-bold uppercase tracking-[0.2em] italic">
+                <Zap size={10} /> Latency: 4ms
+              </div>
+            </div>
           </div>
-          <div className="flex-1 space-y-1">
-            <p className="text-sm text-blue-400 font-bold uppercase tracking-widest">
-              Lumina Pro Tip
-            </p>
-            <p className="text-sm text-slate-400 leading-relaxed font-medium">
-              Try asking for complex code architecture, API design, gorgeous UI
-              layouts, or debugging help. Lumina is optimized for developers and
-              high-performance tasks. Use `Shift+Enter` for a new line.
-            </p>
-          </div>
-          <Zap className="text-slate-800 shrink-0" size={36} />
-        </section>
+        </div>
       </main>
 
-      {/* Global Neural Interface (Input Container) */}
-      <footer className="w-full bg-[#0a0c10]/90 backdrop-blur-xl border-t border-slate-800/50 p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
-        <div className="max-w-[1600px] mx-auto w-full bg-slate-900/80 border border-slate-800 rounded-[2.5rem] p-4 flex items-center gap-4 group transition-all focus-within:ring-2 focus-within:ring-blue-600/50">
-          <div className="flex items-center gap-2 pl-3 text-blue-500 shrink-0">
-            <Terminal size={18} />
-          </div>
+      <style jsx global>{`
+        /* ব্রাউজারের মেইন স্ক্রলবার ভ্যানিশ */
+        html,
+        body {
+          overflow: hidden !important;
+          height: 100% !important;
+          margin: 0;
+          padding: 0;
+        }
 
-          <textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleGenerate();
-              }
-            }}
-            placeholder="Ask Lumina to write something amazing..."
-            rows={1}
-            className="flex-1 bg-transparent border-none outline-none text-white text-base font-medium placeholder:text-slate-700 resize-none max-h-40 leading-normal py-1 custom-scrollbar"
-          />
-
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !prompt.trim()}
-            className="py-3 px-6 bg-white hover:bg-blue-600 text-black hover:text-white font-black rounded-xl transition-all active:scale-95 disabled:opacity-30 flex items-center justify-center gap-2 group/btn shrink-0 uppercase tracking-tighter"
-          >
-            {loading ? (
-              <RefreshCcw className="animate-spin" size={18} />
-            ) : (
-              <>
-                <Zap size={18} className="fill-current" />
-                Generate Magic
-              </>
-            )}
-          </button>
-        </div>
-        <p className="text-center text-[10px] text-slate-700 font-mono mt-3 uppercase tracking-widest">
-          Gemini is AI and can make mistakes. All responses are simulation
-          results.
-        </p>
-      </footer>
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }
+
+// লোডিং আইকন এর জন্য
+const LoadingSpinner = ({
+  className,
+  size,
+}: {
+  className?: string;
+  size?: number;
+}) => (
+  <motion.svg
+    animate={{ rotate: 360 }}
+    transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+  </motion.svg>
+);

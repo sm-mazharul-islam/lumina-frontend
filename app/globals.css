@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
+/* 1. Global CSS Variables & Theme Configuration */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --foreground: #020617; /* Slate-950 look for light mode */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #020617; /* Ultra dark blue/slate */
+    --foreground: #f8fafc; /* Slate-50 */
   }
 }
 
+/* Tailwind Theme Inline Configuration */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular;
+}
+
+/* 2. Base Body Styles & Layout Fixes */
+html,
 body {
+  max-width: 100vw;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden !important; /* ডানে-বামে স্লাইডিং বন্ধ করবে */
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 3. Global Scrollbar Removal (The "Magic" Part) */
+/* এটি ব্রাউজারের মেইন স্ক্রলবার এবং যেকোনো এলিমেন্টের বার হাইড করবে */
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, and Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* 4. Utility Classes */
+@layer utilities {
+  /* যদি কখনো কোনো নির্দিষ্ট ডিভ-এ স্ক্রলবার হাইড করতে চান */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* টেক্সট সিলেকশন কালার (Lumina AI এর সাথে মানানসই) */
+  ::selection {
+    background-color: rgba(37, 99, 235, 0.2); /* Blue-600 with opacity */
+    color: inherit;
+  }
+}
+
+/* 5. Typography Fixes for AI Content (React Markdown) */
+.prose {
+  color: var(--foreground) !important;
+}
+
+.prose strong {
+  color: inherit;
+  font-weight: 800;
+}
+
+.prose code {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
 }

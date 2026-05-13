@@ -14,15 +14,17 @@ import {
   Zap,
   ShieldCheck,
   User as UserIcon,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string>("User");
   const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // মোবাইলের জন্য সাইডবার কন্ট্রোল
 
   useEffect(() => {
-    // Cascading render এড়াতে এবং ব্রাউজার পেইন্ট হওয়ার পর মাউন্ট করতে requestAnimationFrame ব্যবহার করা হয়েছে
     const handleMount = () => {
       setMounted(true);
       if (typeof window !== "undefined") {
@@ -77,95 +79,146 @@ export default function Sidebar() {
     window.location.href = "/login";
   };
 
-  // হাইড্রেশন এরর এড়াতে মাউন্ট হওয়ার আগ পর্যন্ত কন্টেন্ট রেন্ডার হবে না
+  // হাইড্রেশন এরর এড়াতে প্রাথমিক রিটার্ন
   if (!mounted) {
     return (
-      <aside className="w-64 h-screen bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800" />
+      <aside className="hidden lg:flex w-64 h-screen bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800" />
     );
   }
 
   return (
-    <aside className="w-64 h-screen bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col overflow-hidden">
-      {/* Branding Section */}
-      <div className="mb-10 px-2">
-        <div className="flex items-center gap-2.5">
-          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/30">
-            <Zap size={20} className="text-white fill-white" />
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">
-            LUMINA<span className="text-blue-600">.</span>
-          </h1>
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 bg-slate-100 dark:bg-blue-900/10 w-fit px-3 py-1.5 rounded-full border border-slate-200 dark:border-blue-900/30">
-          {userRole === "Admin" ? (
-            <ShieldCheck size={12} className="text-blue-500" />
-          ) : (
-            <UserIcon size={12} className="text-blue-500" />
-          )}
-          <p className="text-[10px] font-black text-slate-500 dark:text-blue-400 uppercase tracking-widest">
-            {userRole} MODE
-          </p>
-        </div>
-      </div>
-
-      <p className="px-4 mb-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-        Intelligence Core
-      </p>
-
-      <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar">
-        {filteredMenu.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 group relative ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-xl shadow-blue-600/25 translate-x-1"
-                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900/80 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <span
-                className={`${isActive ? "text-white" : "text-slate-400 group-hover:text-blue-500"} transition-colors`}
-              >
-                {item.icon}
-              </span>
-              <span className="tracking-tight">{item.name}</span>
-
-              {isActive && (
-                <div className="absolute right-4 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto pt-6 space-y-3 border-t border-slate-100 dark:border-slate-800">
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-4 py-2.5 text-xs font-black text-slate-400 hover:text-blue-600 transition-all uppercase tracking-tighter group"
-        >
-          <Home
-            size={16}
-            className="group-hover:scale-110 transition-transform"
-          />
-          <span>Exit to Website</span>
-        </Link>
-
+    <>
+      {/* --- মোবাইল মেনু ট্রিগার (মোবাইল এবং ট্যাবলেট এর জন্য) --- */}
+      <div className="lg:hidden fixed top-4 right-4 z-[100]">
         <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-4 py-3.5 text-red-500 font-black text-sm hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30 group"
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-3 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-600/30 active:scale-95 transition-transform"
         >
-          <LogOut
-            size={20}
-            className="group-hover:-translate-x-1 transition-transform"
-          />
-          <span className="tracking-tight italic uppercase">
-            Terminate Session
-          </span>
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
-    </aside>
+
+      {/* --- মোবাইল ওভারলে (সাইডবার খুললে ব্যাকগ্রাউন্ড ঝাপসা করবে) --- */}
+      <AnimatePresence>
+        {isOpen && (
+          <div
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[80] lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* --- মেইন সাইডবার --- */}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-[90] w-72 lg:w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Branding Section */}
+        <div className="mb-10 px-2 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/30">
+              <Zap size={20} className="text-white fill-white" />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">
+              LUMINA<span className="text-blue-600">.</span>
+            </h1>
+          </div>
+
+          {/* মোবাইলে ক্লোজ করার বাটন (ঐচ্ছিক) */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden text-slate-400 p-1"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* User Identity Badge */}
+        <div className="mb-8 px-2">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-blue-900/10 w-fit px-3 py-1.5 rounded-full border border-slate-200 dark:border-blue-900/30">
+            {userRole === "Admin" ? (
+              <ShieldCheck size={12} className="text-blue-500" />
+            ) : (
+              <UserIcon size={12} className="text-blue-500" />
+            )}
+            <p className="text-[10px] font-black text-slate-500 dark:text-blue-400 uppercase tracking-widest">
+              {userRole} MODE
+            </p>
+          </div>
+        </div>
+
+        <p className="px-4 mb-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+          Intelligence Core
+        </p>
+
+        {/* Navigation Section */}
+        <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar">
+          {filteredMenu.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setIsOpen(false)} // লিংকে ক্লিক করলে মেনু বন্ধ হবে (Cascading Render ফিক্স)
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 group relative ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/25 translate-x-1"
+                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900/80 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span
+                  className={`${
+                    isActive
+                      ? "text-white"
+                      : "text-slate-400 group-hover:text-blue-500"
+                  } transition-colors`}
+                >
+                  {item.icon}
+                </span>
+                <span className="tracking-tight">{item.name}</span>
+
+                {isActive && (
+                  <div className="absolute right-4 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Action Footer */}
+        <div className="mt-auto pt-6 space-y-3 border-t border-slate-100 dark:border-slate-800">
+          <Link
+            href="/"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 text-xs font-black text-slate-400 hover:text-blue-600 transition-all uppercase tracking-tighter group"
+          >
+            <Home
+              size={16}
+              className="group-hover:scale-110 transition-transform"
+            />
+            <span>Exit to Website</span>
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 px-4 py-3.5 text-red-500 font-black text-sm hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30 group"
+          >
+            <LogOut
+              size={20}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            <span className="tracking-tight italic uppercase">
+              Terminate Session
+            </span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
+
+// AnimatePresence এর জন্য একটি ছোট হেল্পার (ঐচ্ছিক, যদি ফ্রেমার মোশন থাকে)
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => (
+  <>{children}</>
+);
