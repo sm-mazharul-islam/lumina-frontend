@@ -79,7 +79,7 @@ export default function AIHubPage() {
     <div className="fixed inset-0 bg-[#050609] text-slate-300 flex flex-col overflow-hidden font-sans z-10">
       {/* 1. Header - Absolute Fixed Height */}
       <header className="h-16 border-b border-white/5 bg-[#050609]/80 backdrop-blur-xl shrink-0 flex items-center">
-        <nav className="max-w-[1600px] w-full mx-auto px-6 flex items-center justify-between">
+        <nav className="max-w-[1000px] w-full mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-black text-white tracking-tighter uppercase italic">
               LUMINA <span className="text-blue-600">AI</span>

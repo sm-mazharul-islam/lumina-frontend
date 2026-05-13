@@ -2,19 +2,31 @@
 
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ThemeProviderProps } from "next-themes";
-import { useHasMounted } from "@/src/hooks/useHasMounted";
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  const hasMounted = useHasMounted();
+export default function ThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  const [mounted, setMounted] = React.useState(false);
 
-  /**
-   * হাইড্রেশন এরর এবং স্ক্রিপ্ট ট্যাগ এরর এড়াতে:
-   * ক্লায়েন্ট সাইডে মাউন্ট হওয়ার আগ পর্যন্ত থিম প্রোভাইডার রেন্ডার হবে না।
-   * এর ফলে সার্ভার এবং ক্লায়েন্টের আউটপুট প্রথম রেন্ডারে একই থাকবে।
-   */
-  if (!hasMounted) {
-    return <>{children}</>;
+  React.useEffect(() => {
+    // ১. requestAnimationFrame ব্যবহার করে স্টেট আপডেটকে পরবর্তী ফ্রেম-এ পাঠানো হয়েছে।
+    // এটি 'Cascading Render' এবং 'Script Tag' এরর দুটোই ফিক্স করে।
+    const frameId = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  // ২. হাইড্রেশন শেষ না হওয়া পর্যন্ত কন্টেন্ট রেন্ডার করা থেকে বিরত থাকে।
+  // তবে Children গুলোকে একটি wrapper এ রাখা হয়েছে যাতে Layout শিফট না হয়।
+  if (!mounted) {
+    return (
+      <div style={{ visibility: "hidden" }} aria-hidden="true">
+        {children}
+      </div>
+    );
   }
 
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;

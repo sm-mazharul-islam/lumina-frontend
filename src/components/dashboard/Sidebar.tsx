@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
@@ -12,8 +13,6 @@ import {
   LogOut,
   Home,
   Zap,
-  ShieldCheck,
-  User as UserIcon,
   Menu,
   X,
 } from "lucide-react";
@@ -22,21 +21,20 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string>("User");
   const [mounted, setMounted] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // মোবাইলের জন্য সাইডবার কন্ট্রোল
+  const [isOpen, setIsOpen] = useState(false); // মোবাইল মেনু কন্ট্রোল
 
   useEffect(() => {
-    const handleMount = () => {
+    const frameId = requestAnimationFrame(() => {
       setMounted(true);
       if (typeof window !== "undefined") {
         const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
         setUserRole(savedUser.role || "User");
       }
-    };
-
-    const frameId = requestAnimationFrame(handleMount);
+    });
     return () => cancelAnimationFrame(frameId);
   }, []);
 
+  // মেনু আইটেম
   const menuItems = [
     {
       name: "Overview",
@@ -75,84 +73,54 @@ export default function Sidebar() {
   );
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.clear();
     window.location.href = "/login";
   };
 
-  // হাইড্রেশন এরর এড়াতে প্রাথমিক রিটার্ন
-  if (!mounted) {
-    return (
-      <aside className="hidden lg:flex w-64 h-screen bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800" />
-    );
-  }
+  if (!mounted) return null;
 
   return (
     <>
-      {/* --- মোবাইল মেনু ট্রিগার (মোবাইল এবং ট্যাবলেট এর জন্য) --- */}
-      <div className="lg:hidden fixed top-4 right-4 z-[100]">
+      {/* --- মোবাইল মেনু বাটন (শুধুমাত্র মোবাইলে দেখাবে) --- */}
+      <div className="lg:hidden fixed top-4 left-4 z-[60]">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-3 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-600/30 active:scale-95 transition-transform"
+          className="p-2.5 bg-blue-600 text-white rounded-xl shadow-lg active:scale-90 transition-all"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* --- মোবাইল ওভারলে (সাইডবার খুললে ব্যাকগ্রাউন্ড ঝাপসা করবে) --- */}
+      {/* --- মোবাইল ওভারলে (সাইডবার খুললে ব্যাকগ্রাউন্ড ঝাপসা হবে) --- */}
       <AnimatePresence>
         {isOpen && (
-          <div
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[80] lg:hidden"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] lg:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* --- মেইন সাইডবার --- */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-[90] w-72 lg:w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] lg:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed lg:static top-0 left-0 z-[55] w-64 h-screen bg-[#050609] border-r border-white/5 p-6 flex flex-col shrink-0 transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Branding Section */}
-        <div className="mb-10 px-2 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/30">
-              <Zap size={20} className="text-white fill-white" />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter italic uppercase">
-              LUMINA<span className="text-blue-600">.</span>
-            </h1>
+        {/* Branding */}
+        <div className="mb-10 px-2 flex items-center gap-3 shrink-0">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20">
+            <Zap size={20} className="text-white fill-white" />
           </div>
-
-          {/* মোবাইলে ক্লোজ করার বাটন (ঐচ্ছিক) */}
-          <button
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden text-slate-400 p-1"
-          >
-            <X size={20} />
-          </button>
+          <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic">
+            LUMINA<span className="text-blue-600">.</span>
+          </h1>
         </div>
 
-        {/* User Identity Badge */}
-        <div className="mb-8 px-2">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-blue-900/10 w-fit px-3 py-1.5 rounded-full border border-slate-200 dark:border-blue-900/30">
-            {userRole === "Admin" ? (
-              <ShieldCheck size={12} className="text-blue-500" />
-            ) : (
-              <UserIcon size={12} className="text-blue-500" />
-            )}
-            <p className="text-[10px] font-black text-slate-500 dark:text-blue-400 uppercase tracking-widest">
-              {userRole} MODE
-            </p>
-          </div>
-        </div>
-
-        <p className="px-4 mb-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-          Intelligence Core
-        </p>
-
-        {/* Navigation Section */}
+        {/* Navigation */}
         <nav className="flex-1 space-y-1.5 overflow-y-auto no-scrollbar">
           {filteredMenu.map((item) => {
             const isActive = pathname === item.href;
@@ -160,65 +128,65 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setIsOpen(false)} // লিংকে ক্লিক করলে মেনু বন্ধ হবে (Cascading Render ফিক্স)
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 group relative ${
+                onClick={() => setIsOpen(false)} // মোবাইলে ক্লিক করলে মেনু বন্ধ হবে
+                className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/25 translate-x-1"
-                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900/80 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/25"
+                    : "text-slate-500 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <span
-                  className={`${
-                    isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-blue-500"
-                  } transition-colors`}
-                >
-                  {item.icon}
-                </span>
+                {item.icon}
                 <span className="tracking-tight">{item.name}</span>
-
-                {isActive && (
-                  <div className="absolute right-4 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Action Footer */}
-        <div className="mt-auto pt-6 space-y-3 border-t border-slate-100 dark:border-slate-800">
-          <Link
-            href="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-xs font-black text-slate-400 hover:text-blue-600 transition-all uppercase tracking-tighter group"
-          >
-            <Home
-              size={16}
-              className="group-hover:scale-110 transition-transform"
-            />
-            <span>Exit to Website</span>
-          </Link>
+        {/* Bottom Action Area */}
+        <div className="mt-auto pt-6 shrink-0 border-t border-white/5">
+          <div className="space-y-2">
+            <Link
+              href="/"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3.5 px-4 py-3 text-slate-500 hover:text-white transition-all group"
+            >
+              <Home
+                size={18}
+                className="group-hover:scale-110 transition-transform"
+              />
+              <span className="text-[11px] font-bold uppercase tracking-widest">
+                Exit to Website
+              </span>
+            </Link>
 
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-red-500 font-black text-sm hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30 group"
-          >
-            <LogOut
-              size={20}
-              className="group-hover:-translate-x-1 transition-transform"
-            />
-            <span className="tracking-tight italic uppercase">
-              Terminate Session
-            </span>
-          </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3.5 px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-2xl transition-all group"
+            >
+              <div className="relative flex items-center justify-center">
+                <LogOut
+                  size={20}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full border-2 border-[#050609]" />
+              </div>
+              <span className="text-[11px] font-black uppercase italic tracking-tighter">
+                Terminate Session
+              </span>
+            </button>
+          </div>
         </div>
       </aside>
+
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </>
   );
 }
-
-// AnimatePresence এর জন্য একটি ছোট হেল্পার (ঐচ্ছিক, যদি ফ্রেমার মোশন থাকে)
-const AnimatePresence = ({ children }: { children: React.ReactNode }) => (
-  <>{children}</>
-);
