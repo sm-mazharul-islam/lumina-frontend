@@ -18,6 +18,13 @@ import {
   Send,
 } from "lucide-react";
 
+interface AIResponse {
+  success: boolean;
+  result: string;
+  message?: string;
+  error?: string;
+}
+
 export default function AIHubPage() {
   const [prompt, setPrompt] = useState<string>("");
   const [result, setResult] = useState<string>("");
@@ -42,7 +49,7 @@ export default function AIHubPage() {
     }
   }, [prompt]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (): Promise<void> => {
     if (!prompt.trim()) return;
     setLoading(true);
     setLastQuery(prompt);
@@ -50,22 +57,46 @@ export default function AIHubPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await api.post(
+
+      // ২. Axios-এ জেনেরিক টাইপ <AIResponse> ব্যবহার করা
+      const res = await api.post<AIResponse>(
         "/api/ai/generate",
         { prompt },
-        { headers: { Authorization: `Bearer ${token}` } },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
       );
-      setResult(res.data.result);
-      setPrompt("");
-    } catch (err: unknown) {
+
+      if (res.data.success) {
+        setResult(res.data.result);
+        setPrompt("");
+      } else {
+        setResult(
+          `### ⚠️ AI Error\n${res.data.message || "Failed to generate content."}`,
+        );
+      }
+    } catch (err) {
+      // ৩. 'any' এর পরিবর্তে AxiosError ব্যবহার করা
+      const error = err as AxiosError<AIResponse>;
+
+      console.error("Frontend Error:", error);
+
+      // ব্যাকঅ্যান্ড থেকে পাঠানো এরর মেসেজটি সেফলি বের করা
+      const serverError =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
+
       setResult(
-        "### ⚠️ Connection Lost\nNeural link disrupted. Please try again.",
+        `### ⚠️ Neural Link Disrupted\n**Reason:** ${serverError}\n\n*Please check if your Gemini API Key is set in the backend.*`,
       );
     } finally {
       setLoading(false);
     }
   };
-
   const copyToClipboard = () => {
     if (result) {
       navigator.clipboard.writeText(result);
