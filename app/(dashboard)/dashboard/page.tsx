@@ -1,125 +1,112 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  TrendingUp,
-  Users,
-  Zap,
-  ShieldCheck,
-  ArrowUpRight,
-} from "lucide-react";
-import { useHasMounted } from "@/src/hooks/useHasMounted";
 
-export default function DashboardHome() {
-  const hasMounted = useHasMounted();
-  const [userName, setUserName] = useState("User");
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Sparkles, LayoutGrid, List } from "lucide-react";
+import AIDashboard from "@/src/components/dashboard/aiDashboard/AIDashboard";
 
-  useEffect(() => {
-    // সমাধান: সরাসরি setState না করে একটি ছোট ডিলে বা
-    // মাইক্রোটাস্কের ভেতর রাখলে Cascading Render এরর আসে না।
-    if (hasMounted) {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      if (savedUser.name) {
-        // Use requestAnimationFrame or setTimeout to move the update
-        // to the next tick
-        const timeout = setTimeout(() => {
-          setUserName(savedUser.name);
-        }, 0);
-        return () => clearTimeout(timeout);
-      }
-    }
-  }, [hasMounted]);
+export default function AIHubPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
-  // হাইড্রেশন এরর এড়াতে মাউন্ট না হওয়া পর্যন্ত কিছুই রেন্ডার করবেন না
-  if (!hasMounted) return null;
-
-  const stats = [
-    {
-      label: "Revenue",
-      value: "$12,450",
-      growth: "+12.5%",
-      icon: <TrendingUp className="text-blue-500" />,
-    },
-    {
-      label: "Active Users",
-      value: "1,205",
-      growth: "+3.2%",
-      icon: <Users className="text-purple-500" />,
-    },
-    {
-      label: "AI Generations",
-      value: "45.2k",
-      growth: "+18%",
-      icon: <Zap className="text-amber-500" />,
-    },
-    {
-      label: "System Health",
-      value: "99.9%",
-      growth: "Stable",
-      icon: <ShieldCheck className="text-emerald-500" />,
-    },
-  ];
+  const categories = ["All", "Text", "Image", "Code", "Data", "Security"];
 
   return (
-    <div className="h-full flex flex-col space-y-6 overflow-hidden no-scrollbar">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Welcome back, {userName}! 👋
+    <div className="min-h-full flex flex-col space-y-6 sm:space-y-10 px-4 sm:px-6 lg:px-10 pb-12 transition-all duration-500">
+      {/* --- Header Section --- */}
+      <header className="flex flex-col space-y-6 pt-4 sm:pt-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="max-w-4xl space-y-2 sm:space-y-4"
+        >
+          <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.3em] text-[9px] sm:text-[11px] mb-1 mt-20 lg:mt-0">
+            <Sparkles size={14} className="animate-pulse" />{" "}
+            Neural_Hub_Ecosystem: v2.5
+          </div>
+          <h2 className="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tighter uppercase italic text-white leading-none">
+            AI Tool <span className="text-primary">Ecosystem</span>
           </h2>
-          <p className="text-slate-500 font-medium">
-            Here&apos;s your Lumina performance today.
+          <p className="text-white/40 font-medium text-sm sm:text-lg leading-relaxed">
+            Deploy specialized neural nodes for your next big project.
+            Seamlessly integrate multi-modal intelligence with zero latency.
           </p>
+        </motion.div>
+
+        {/* Toolbar: Search and Filter */}
+        <div className="flex flex-col xl:flex-row gap-4 items-center justify-between bg-[#0c0d11] border border-white/5 p-2 sm:p-4 rounded-[2rem] sm:rounded-[3.5rem] shadow-2xl shadow-black/50">
+          {/* Search Input Container */}
+          <div className="relative w-full xl:w-[450px] group">
+            <Search
+              className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Search neural modules..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-[#050609] border border-white/5 py-4 pl-14 pr-6 rounded-2xl sm:rounded-3xl outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all font-medium text-sm text-white placeholder:text-white/10"
+            />
+          </div>
+
+          {/* Category Pills - Scrollable on Mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full xl:w-auto px-2 py-1">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-6 py-2.5 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                  activeCategory === cat
+                    ? "bg-primary border-primary text-white shadow-xl shadow-primary/20"
+                    : "bg-[#050609] border-white/5 text-white/40 hover:border-primary/40 hover:text-white"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* View Toggle (Hidden on Mobile/Tablet) */}
+          <div className="hidden xl:flex items-center bg-[#050609] border border-white/5 p-1.5 rounded-2xl">
+            <button className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner shadow-primary/5">
+              <LayoutGrid size={20} />
+            </button>
+            <button className="p-2.5 text-white/20 hover:text-white transition-colors">
+              <List size={20} />
+            </button>
+          </div>
         </div>
-        <button className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-600/20 active:scale-95 text-sm transition-all">
-          Generate Report <ArrowUpRight size={18} />
-        </button>
       </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div
-            key={idx}
-            className="p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-sm"
+      {/* --- Main Content Area --- */}
+      <main className="flex-1 min-h-0 pt-2">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory + searchQuery}
+            initial={{ opacity: 0, scale: 0.98, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 1.02, y: -15 }}
+            transition={{
+              type: "spring",
+              stiffness: 100,
+              damping: 15,
+              duration: 0.4,
+            }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl">
-                {stat.icon}
-              </div>
-              <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-emerald-100 text-emerald-600">
-                {stat.growth}
-              </span>
-            </div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">
-              {stat.label}
-            </p>
-            <h4 className="text-2xl font-black">{stat.value}</h4>
-          </div>
-        ))}
-      </div>
+            <AIDashboard
+              searchQuery={searchQuery}
+              activeCategory={activeCategory}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
-      {/* Bento Grid Layout Area */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
-        <div className="lg:col-span-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8">
-          <h3 className="text-xl font-black mb-4">Activity Overview</h3>
-          <div className="w-full h-48 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-300 flex items-center justify-center">
-            <p className="text-slate-400 text-sm font-bold italic">
-              Chart Placeholder
-            </p>
-          </div>
-        </div>
-        <div className="bg-blue-600 rounded-[2.5rem] p-8 text-white flex flex-col justify-between shadow-2xl">
-          <h3 className="text-2xl font-black italic tracking-tighter uppercase leading-none">
-            Upgrade to Pro
-          </h3>
-          <p className="text-blue-100 text-sm opacity-80">
-            Unlimited AI generations and advanced insights.
-          </p>
-          <button className="w-full py-4 bg-white text-blue-600 font-black rounded-2xl active:scale-95 transition-all">
-            Explore Plans
-          </button>
-        </div>
+      {/* Decorative Branding Overlay */}
+      <div className="fixed bottom-10 right-10 pointer-events-none opacity-5 hidden 2xl:block select-none">
+        <h1 className="text-[12rem] font-black italic tracking-tighter uppercase leading-none">
+          Lumina
+        </h1>
       </div>
     </div>
   );

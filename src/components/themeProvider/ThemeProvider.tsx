@@ -1,30 +1,59 @@
 "use client";
 
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-export default function ThemeProvider({
+// ১. নতুন ইন্টারফেস তৈরি করুন যা আপনার পাঠানো প্রপসগুলো গ্রহণ করতে পারে
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  attribute?: string; // ঐচ্ছিক প্রপস হিসেবে রাখুন
+  defaultTheme?: string;
+  enableSystem?: boolean;
+  disableTransitionOnChange?: boolean;
+}
+
+const ThemeContext = createContext({ theme: "dark", toggleTheme: () => {} });
+
+export const ThemeProvider = ({
   children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
-  const [mounted, setMounted] = React.useState(false);
+  defaultTheme = "dark", // ডিফল্ট থিম সেট করে দিন
+}: ThemeProviderProps) => {
+  const [theme, setTheme] = useState(defaultTheme);
+  const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
-    // হাইড্রেশন এরর এড়াতে মাউন্ট হওয়া পর্যন্ত অপেক্ষা করা
-    const frameId = requestAnimationFrame(() => {
-      setMounted(true);
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, []);
+  useEffect(() => {
+    const initializeTheme = () => {
+      const savedTheme = localStorage.getItem("theme") || defaultTheme;
 
-  // কন্টেন্ট রেন্ডার করার আগে একটি ইনভিজিবল র‍্যাপার ব্যবহার করা হয়েছে
+      if (savedTheme !== theme) {
+        setTheme(savedTheme);
+      }
+
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+
+      requestAnimationFrame(() => {
+        setMounted(true);
+      });
+    };
+
+    initializeTheme();
+  }, [defaultTheme, theme]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
+
   if (!mounted) {
-    return (
-      <div style={{ visibility: "hidden" }} aria-hidden="true">
-        {children}
-      </div>
-    );
+    return <div className="invisible">{children}</div>;
   }
 
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
-}
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => useContext(ThemeContext);
