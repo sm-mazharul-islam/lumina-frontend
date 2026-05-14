@@ -10,17 +10,14 @@ export default function ThemeProvider({
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    // ১. requestAnimationFrame ব্যবহার করে স্টেট আপডেটকে পরবর্তী ফ্রেম-এ পাঠানো হয়েছে।
-    // এটি 'Cascading Render' এবং 'Script Tag' এরর দুটোই ফিক্স করে।
+    // হাইড্রেশন এরর এড়াতে মাউন্ট হওয়া পর্যন্ত অপেক্ষা করা
     const frameId = requestAnimationFrame(() => {
       setMounted(true);
     });
-
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  // ২. হাইড্রেশন শেষ না হওয়া পর্যন্ত কন্টেন্ট রেন্ডার করা থেকে বিরত থাকে।
-  // তবে Children গুলোকে একটি wrapper এ রাখা হয়েছে যাতে Layout শিফট না হয়।
+  // কন্টেন্ট রেন্ডার করার আগে একটি ইনভিজিবল র‍্যাপার ব্যবহার করা হয়েছে
   if (!mounted) {
     return (
       <div style={{ visibility: "hidden" }} aria-hidden="true">
