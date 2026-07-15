@@ -1,4 +1,4 @@
-# ⚡ LUMINA AI - High-Performance Neural Ecosystem
+# ⚡ LUMINA AI | High-Performance Neural Ecosystem
 
 Lumina AI is a premium, modern AI-integrated platform designed to bridge the gap between human creativity and machine intelligence. Built with the **MERN Stack** and powered by **Next.js**, it features a gorgeous, high-performance interface with glassmorphic aesthetics and smooth neural animations.
 
