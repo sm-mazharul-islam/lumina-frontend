@@ -15,7 +15,7 @@ To explore the dashboard and neural interface without creating a new account, us
 
 ---
 
-## 📸 Visual Overview
+## 📸 Visual Overview →
 
 ### 🖥️ High-Fidelity Dashboard
 
